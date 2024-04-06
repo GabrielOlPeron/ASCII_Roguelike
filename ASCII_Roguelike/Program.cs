@@ -1,15 +1,14 @@
 ﻿using SadConsole.Configuration;
+using SadConsoleGame;
 
 Settings.WindowTitle = "My SadConsole Game";
 
-
-Builder configuration = new Builder().SetScreenSize(90, 30).UseDefaultConsole().OnStart(Startup);
+Builder configuration = new Builder()
+    .SetScreenSize(120, 38)
+    .SetStartingScreen<RootScreen>()
+    .IsStartingScreenFocused(true)
+    ;
 
 Game.Create(configuration);
 Game.Instance.Run();
 Game.Instance.Dispose();
-
-static void Startup(object? sender, GameHost host)
-{
-    Console startingConsole = Game.Instance.StartingConsole;
-}
