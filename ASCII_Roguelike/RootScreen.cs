@@ -1,64 +1,49 @@
-﻿using SadConsole.Components;
-using SadConsole.Input;
-
-namespace SadConsoleGame;
+﻿namespace SadConsoleGame;
 
 internal class RootScreen : ScreenObject
 {
-    private ScreenSurface _map;
-    private GameObject _controlledObject;
+    private Console stats;
+    private Console log;
+    private Map map;
     public RootScreen()
     {
-        _map = new ScreenSurface(Game.Instance.ScreenCellsX, Game.Instance.ScreenCellsY - 5);
-        _map.UseMouse = false;
+        //Game.Instance.StartingConsole.Font = Game.Instance.Fonts["fonts/ThinExtended.font"];
+        // stats console
+        CreateConsole(stats,true, 35, 50, 125, 0, Color.Black, Color.AliceBlue);
 
-        FillBackground();
+        // log console
+        CreateConsole(log, true, 125, 10, 0, 40, Color.Black, Color.AliceBlue);
 
-        Children.Add(_map);
+       
+        //map
+        map =new Map(71,38,1,1);
+        Children.Add(map.SurfaceObject);
+
         
-        _controlledObject = new GameObject(new ColoredGlyph(Color.White, Color.Black, 2), _map.Surface.Area.Center, _map);
     }
 
-    private void FillBackground()
+    private void CreateConsole(Console console,bool hasBorder,int width,int height,int xPosition,int yPosition, Color backgroundColor, Color borderColor)
     {
-        Color[] colors = new[] { Color.LightGreen, Color.Coral, Color.CornflowerBlue, Color.DarkGreen };
-        float[] colorStops = new[] { 0f, 0.35f, 0.75f, 1f };
+        console = new(width, height);
+        console.Position = (xPosition, yPosition);
+        console.Surface.DefaultBackground = backgroundColor;
+        console.Clear();
+        console.Cursor.IsEnabled = false;
+        console.Cursor.IsVisible = false;
+        console.Cursor.MouseClickReposition = false;
+        console.IsFocused = false;
+        console.FocusOnMouseClick = true;
 
-        Algorithms.GradientFill(_map.FontSize,
-                                _map.Surface.Area.Center,
-                                _map.Surface.Width / 3,
-                                45,
-                                _map.Surface.Area,
-                                new Gradient(colors, colorStops),
-                                (x, y, color) => _map.Surface[x, y].Background = color);
-    }
+        
 
-    public override bool ProcessKeyboard(Keyboard keyboard)
-    {
-        bool handled = false;
 
-        if (keyboard.IsKeyPressed(Keys.Up))
+        if (hasBorder)
         {
-            _controlledObject.Move(_controlledObject.Position + Direction.Up, _map);
-            handled = true;
-        }
-        else if (keyboard.IsKeyPressed(Keys.Down))
-        {
-            _controlledObject.Move(_controlledObject.Position + Direction.Down, _map);
-            handled = true;
+            console.DrawBox(new Rectangle(0, 0, console.Width, console.Height), ShapeParameters.CreateStyledBoxThin(borderColor));
+
         }
 
-        if (keyboard.IsKeyPressed(Keys.Left))
-        {
-            _controlledObject.Move(_controlledObject.Position + Direction.Left, _map);
-            handled = true;
-        }
-        else if (keyboard.IsKeyPressed(Keys.Right))
-        {
-            _controlledObject.Move(_controlledObject.Position + Direction.Right, _map);
-            handled = true;
-        }
 
-        return handled;
+        Children.Add(console);
     }
 }
