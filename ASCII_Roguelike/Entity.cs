@@ -1,4 +1,6 @@
-﻿using GoRogue.GameFramework;
+﻿using GoRogue.FOV;
+using SadRogue.Primitives.GridViews;
+
 
 namespace SadConsoleGame;
 
@@ -52,8 +54,33 @@ internal class Entity
 
         position = newPosition;
         DrawGameObject(map.SurfaceObject);
+        Fov(map);
 
         return true;
+    }
+
+    public void Fov(Map map)
+    {
+
+        map.arrayView = new ArrayView<Entity>(map.mapSurface.Width, map.mapSurface.Height);
+        map.TransparencyView = new LambdaTranslationGridView<Entity, bool>(map.arrayView, t => t.isTransparent);
+        map.FOV = new RecursiveShadowcastingFOV(map.TransparencyView);
+
+        map.arrayView.ApplyOverlay(
+            pos => map.wallFloorValues[pos]
+                ? new Entity(true, true, new ColoredGlyph(Color.White, Color.Black, '.'), pos, map.mapSurface)
+                : new Entity(false, false, new ColoredGlyph(Color.White, Color.DarkGray, '#'), pos, map.mapSurface));
+
+        map.FOV.Calculate(map.player.position, 50, Radius.Square);
+
+        map.arrayView.ApplyOverlay(
+            pos => map.FOV.BooleanResultView[pos]
+                ? new Entity(true, true, new ColoredGlyph(Color.Black, Color.Black, '.'), Point.None, map.mapSurface)
+                : new Entity(false, false, new ColoredGlyph(Color.Black, Color.Black, '#'), pos, map.mapSurface));
+
+        map.mapSurface.IsDirty = true;
+        DrawGameObject(map.mapSurface);
+        
     }
 
     public virtual bool Touched(Entity source, Map map)

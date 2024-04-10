@@ -1,6 +1,9 @@
 ﻿using GoRogue.DiceNotation;
+using GoRogue.FOV;
 using GoRogue.GameFramework;
+using SadConsole;
 using SadConsole.Input;
+using SadRogue.Primitives.GridViews;
 using System.Reflection.Metadata;
 
 namespace SadConsoleGame;
@@ -83,6 +86,7 @@ internal class RootScreen : ScreenObject
     public void MovePlayer(Direction dir,bool handled)
     {
         map.player.Move(map.player.position + dir, map);
+
         handled = true;
         
     }

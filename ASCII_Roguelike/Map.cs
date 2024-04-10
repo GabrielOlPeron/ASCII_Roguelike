@@ -1,15 +1,26 @@
 ﻿using GoRogue.FOV;
+using GoRogue.GameFramework;
 using GoRogue.MapGeneration;
 using SadRogue.Primitives.GridViews;
 using System.Diagnostics.CodeAnalysis;
+using static SadConsole.Readers.Playscii;
 
 namespace SadConsoleGame;
 
 internal class Map
 {
+    public IGridView<bool> wallFloorValues;
+
     public List<Entity> mapEntities= new List<Entity>(); //entities on the map
-   
-    private ScreenSurface mapSurface;
+
+    public  ArrayView<Entity> arrayView;
+    // Grid view we'll pass to FOV, which represents the transparency of terrain
+    public  IGridView<bool> TransparencyView;
+
+    // FOV instance we'll use
+    public  IFOV FOV;
+
+    public ScreenSurface mapSurface;
     public ScreenSurface SurfaceObject => mapSurface;
     public Entity player { get; set; }
     public Entity stair { get; set; }
@@ -22,8 +33,13 @@ internal class Map
         mapSurface.UseMouse = false;
         mapSurface.Font= SquareFont;
 
+        
+
+        
+
         NewMap(mapWidth, mapHeight);
 
+        
     }
 
     //check if a position is occupied by a gameobject
@@ -71,19 +87,30 @@ internal class Map
         // and generate the map.
         generator.ConfigAndGenerateSafe(gen =>
         {
-            gen.AddSteps(DefaultAlgorithms.CellularAutomataGenerationSteps());
+            gen.AddSteps(DefaultAlgorithms.BasicRandomRoomsMapSteps());
         });
+        
 
 
-        var wallFloorValues = generator.Context.GetFirst<ISettableGridView<bool>>("WallFloor");
+        wallFloorValues = generator.Context.GetFirst<ISettableGridView<bool>>("WallFloor");
+
+        
+
         foreach (var pos in wallFloorValues.Positions())
         {
             if (wallFloorValues[pos])
-                mapEntities.Add(new Entity(true,true,new ColoredGlyph(Color.White, Color.Black, '.'), pos, mapSurface));
-                
+                mapEntities.Add(new Entity(true, true, new ColoredGlyph(Color.Yellow, Color.Black, '.'), pos, mapSurface));
+
             else
-                mapEntities.Add(new Entity(false,false, new ColoredGlyph(Color.White, Color.DarkGray, '#'), pos, mapSurface));
-        }    
+                mapEntities.Add(new Entity(false, false, new ColoredGlyph(Color.White, Color.DarkGray, '#'), pos, mapSurface));
+        }
+
+        
+
+
+        
+
+
     }
 
     public void NewMap(int mapWidth,int mapHeight)
@@ -93,9 +120,7 @@ internal class Map
 
         //place player
         player = new Entity(true, false, new ColoredGlyph(Color.Red, Color.Black, '@'), RandomEmptyPosition(), mapSurface);
-
-
-        
-        
+        player.Fov(this);
+   
     }
 }
