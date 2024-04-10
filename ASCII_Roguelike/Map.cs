@@ -1,12 +1,18 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using GoRogue.FOV;
+using GoRogue.MapGeneration;
+using SadRogue.Primitives.GridViews;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SadConsoleGame;
 
 internal class Map
 {
+    public List<Entity> mapEntities= new List<Entity>(); //entities on the map
+   
     private ScreenSurface mapSurface;
     public ScreenSurface SurfaceObject => mapSurface;
-    public GameObject player { get; set; }
+    public Entity player { get; set; }
+    public Entity stair { get; set; }
 
     SadFont SquareFont = (SadFont) GameHost.Instance.LoadFont("./fonts/CheepicusExtended.font");
     public Map(int mapWidth, int mapHeight, int xPosition, int yPosition)
@@ -16,25 +22,80 @@ internal class Map
         mapSurface.UseMouse = false;
         mapSurface.Font= SquareFont;
 
+        NewMap(mapWidth, mapHeight);
 
-
-
-        FillBackground();
-
-        player = new GameObject(new ColoredGlyph(Color.White, Color.Black, '@'), mapSurface.Surface.Area.Center, mapSurface);
     }
 
-    private void FillBackground()
+    //check if a position is occupied by a gameobject
+    public bool IsPositionOccupied(Point position, [NotNullWhen(true)] out Entity? gameObject)
     {
-        Color[] colors = new[] { Color.LightGreen, Color.Coral, Color.CornflowerBlue, Color.DarkGreen };
-        float[] colorStops = new[] { 0f, 0.35f, 0.75f, 1f };
+        // Try to find a map object at that position
+        foreach (Entity otherGameObject in mapEntities)
+        {
+            if (otherGameObject.position == position)
+            {
+                gameObject = otherGameObject;
+                return true;
+            }
+            
+        }
 
-        Algorithms.GradientFill(mapSurface.FontSize,
-                                mapSurface.Surface.Area.Center,
-                                mapSurface.Surface.Width / 3,
-                                45,
-                                mapSurface.Surface.Area,
-                                new Gradient(colors, colorStops),
-                                (x, y, color) => mapSurface.Surface[x, y].Background = color);
+        gameObject = null;
+        return false;
+    }
+
+    //return an empty random position
+    private Point RandomEmptyPosition()
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            // Get a random position
+            Point randomPosition = new Point(Game.Instance.Random.Next(0, mapSurface.Surface.Width), Game.Instance.Random.Next(0, mapSurface.Surface.Height));
+
+            // Check if any object is already positioned there, repeat the loop if found
+            bool foundObject = mapEntities.Any(obj => obj.position == randomPosition && obj.isWalkable==false);
+            if (foundObject) continue;
+
+            // If the code reaches here, we've got a good position, create the game object.
+            return randomPosition;
+                    }
+        return Point.None;
+    } 
+
+    private void DungeonGen(int mapWidth,int mapHeight)
+    {
+        // The map will have a width of 60 and height of 40
+        Generator generator = new Generator(mapWidth, mapHeight);
+
+        // Add the steps to generate a map using the DungeonMazeMap built-in algorithm,
+        // and generate the map.
+        generator.ConfigAndGenerateSafe(gen =>
+        {
+            gen.AddSteps(DefaultAlgorithms.CellularAutomataGenerationSteps());
+        });
+
+
+        var wallFloorValues = generator.Context.GetFirst<ISettableGridView<bool>>("WallFloor");
+        foreach (var pos in wallFloorValues.Positions())
+        {
+            if (wallFloorValues[pos])
+                mapEntities.Add(new Entity(true,true,new ColoredGlyph(Color.White, Color.Black, '.'), pos, mapSurface));
+                
+            else
+                mapEntities.Add(new Entity(false,false, new ColoredGlyph(Color.White, Color.DarkGray, '#'), pos, mapSurface));
+        }    
+    }
+
+    public void NewMap(int mapWidth,int mapHeight)
+    {
+        mapEntities.Clear();
+        DungeonGen(mapWidth, mapHeight);
+
+        //place player
+        player = new Entity(true, false, new ColoredGlyph(Color.Red, Color.Black, '@'), RandomEmptyPosition(), mapSurface);
+
+
+        
+        
     }
 }

@@ -1,20 +1,27 @@
-﻿namespace SadConsoleGame;
+﻿using GoRogue.DiceNotation;
+using GoRogue.GameFramework;
+using SadConsole.Input;
+using System.Reflection.Metadata;
+
+namespace SadConsoleGame;
+
 
 internal class RootScreen : ScreenObject
 {
     private Console stats;
     private Console log;
     private Map map;
+
+    int n = 99;
     public RootScreen()
     {
-        //Game.Instance.StartingConsole.Font = Game.Instance.Fonts["fonts/ThinExtended.font"];
+        int r = Dice.Roll("1d13+2");
         // stats console
-        CreateConsole(stats,true, 35, 50, 125, 0, Color.Black, Color.AliceBlue);
+        stats= CreateConsole(stats,true, 36, 50, 124, 0, Color.Black, Color.AliceBlue);
 
         // log console
-        CreateConsole(log, true, 125, 10, 0, 40, Color.Black, Color.AliceBlue);
+        log= CreateConsole(log, true, 124, 11, 0, 39, Color.Black, Color.AliceBlue);
 
-       
         //map
         map =new Map(71,38,1,1);
         Children.Add(map.SurfaceObject);
@@ -22,7 +29,7 @@ internal class RootScreen : ScreenObject
         
     }
 
-    private void CreateConsole(Console console,bool hasBorder,int width,int height,int xPosition,int yPosition, Color backgroundColor, Color borderColor)
+    private Console CreateConsole(Console console,bool hasBorder,int width,int height,int xPosition,int yPosition, Color backgroundColor, Color borderColor)
     {
         console = new(width, height);
         console.Position = (xPosition, yPosition);
@@ -45,5 +52,39 @@ internal class RootScreen : ScreenObject
 
 
         Children.Add(console);
+        return console;
     }
+
+    public override bool ProcessKeyboard(Keyboard keyboard)
+    {
+        bool handled = false;
+
+        if (keyboard.IsKeyPressed(Keys.Up))
+        {
+            MovePlayer(Direction.Up, handled);
+            
+        }
+        else if (keyboard.IsKeyPressed(Keys.Down))
+        {
+            MovePlayer(Direction.Down, handled);
+        }
+
+        if (keyboard.IsKeyPressed(Keys.Left))
+        {
+            MovePlayer(Direction.Left, handled);
+        }
+        else if (keyboard.IsKeyPressed(Keys.Right))
+        {
+            MovePlayer(Direction.Right, handled);
+        }
+        return handled;
+    }
+
+    public void MovePlayer(Direction dir,bool handled)
+    {
+        map.player.Move(map.player.position + dir, map);
+        handled = true;
+        
+    }
+
 }
