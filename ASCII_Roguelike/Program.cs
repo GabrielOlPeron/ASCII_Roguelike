@@ -6,7 +6,8 @@ Settings.WindowTitle = "My SadConsole Game";
 
 Builder configuration = new Builder()
     .SetScreenSize(GameSettings.GameWidth, GameSettings.GameHeight)
-    .SetStartingScreen<RootScreen>()
+    //.SetStartingScreen<RootScreen>()
+    .SetStartingScreen<CharCreationScreen>()
     .IsStartingScreenFocused(true)
     .ConfigureFonts((fConfig, game) =>
     {
@@ -16,6 +17,7 @@ Builder configuration = new Builder()
         fConfig.AddExtraFonts("fonts/CheepicusExtended.font");
     });
 ;
+
 
 Game.Create(configuration);
 Game.Instance.Run();

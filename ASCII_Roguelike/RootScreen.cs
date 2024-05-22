@@ -1,10 +1,13 @@
-﻿using GoRogue.DiceNotation;
-using GoRogue.FOV;
-using GoRogue.GameFramework;
+﻿
+using GoRogue.DiceNotation;
 using SadConsole;
+using SadConsole.Entities;
 using SadConsole.Input;
-using SadRogue.Primitives.GridViews;
-using System.Reflection.Metadata;
+using SadConsole.UI;
+using SadConsole.UI.Controls;
+using SadConsoleGame.entities.creatures;
+using System;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SadConsoleGame;
 
@@ -15,24 +18,31 @@ internal class RootScreen : ScreenObject
     private Console log;
     private Map map;
 
-    int n = 99;
-    public RootScreen()
+
+    public string race;
+    public string charBackground;
+    public int strength;
+    public int dexterity;
+    public int constitution;
+    public int intuition;
+    public int charisma;
+
+    public RootScreen(string race,string bg,int str,int dex,int cons,int intu,int chari)
     {
-        int r = Dice.Roll("1d13+2");
-        // stats console
-        stats= CreateConsole(stats,true, 36, 50, 124, 0, Color.Black, Color.AliceBlue);
+        this.race = race;
+        this.charBackground = bg;
+        this.strength = str;
+        this.dexterity = dex;
+        this.constitution = cons;
+        this.intuition = intu;
+        this.charisma = chari;  
 
-        // log console
-        log= CreateConsole(log, true, 124, 11, 0, 39, Color.Black, Color.AliceBlue);
-
-        //map
-        map =new Map(71,38,1,1);
-        Children.Add(map.SurfaceObject);
 
         
+        StartGame();  
     }
 
-    private Console CreateConsole(Console console,bool hasBorder,int width,int height,int xPosition,int yPosition, Color backgroundColor, Color borderColor)
+    private Console DrawConsole(Console console,bool hasBorder,int width,int height,int xPosition,int yPosition, Color backgroundColor, Color borderColor)
     {
         console = new(width, height);
         console.Position = (xPosition, yPosition);
@@ -42,8 +52,8 @@ internal class RootScreen : ScreenObject
         console.Cursor.IsVisible = false;
         console.Cursor.MouseClickReposition = false;
         console.IsFocused = false;
-        console.FocusOnMouseClick = true;
-
+        console.FocusOnMouseClick = false;
+        
         
 
 
@@ -54,18 +64,17 @@ internal class RootScreen : ScreenObject
         }
 
 
-        Children.Add(console);
+        this.Children.Add(console);
         return console;
     }
 
     public override bool ProcessKeyboard(Keyboard keyboard)
     {
         bool handled = false;
-
         if (keyboard.IsKeyPressed(Keys.Up))
         {
             MovePlayer(Direction.Up, handled);
-            
+
         }
         else if (keyboard.IsKeyPressed(Keys.Down))
         {
@@ -80,15 +89,34 @@ internal class RootScreen : ScreenObject
         {
             MovePlayer(Direction.Right, handled);
         }
+
         return handled;
     }
 
     public void MovePlayer(Direction dir,bool handled)
     {
-        map.player.Move(map.player.position + dir, map);
-
+        map.player.Move(dir, map);
         handled = true;
         
     }
 
+    private void StartGame()
+    {
+
+        // stats console
+        stats = DrawConsole(stats, true, 36, 50, 124, 0, Color.Black, Color.AliceBlue);
+
+        // log console
+        log = DrawConsole(log, true, 124, 11, 0, 39, Color.Black, Color.AliceBlue);
+
+        //map
+        map = new Map(71, 38, 1, 1, race, charBackground, strength, dexterity, constitution, intuition, charisma);
+        this.Children.Add(map.mapSurface);
+
+        
+
+
+
+
+    }
 }

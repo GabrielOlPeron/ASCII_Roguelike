@@ -1,6 +1,8 @@
 ﻿using GoRogue.FOV;
 using GoRogue.GameFramework;
 using GoRogue.MapGeneration;
+using SadConsoleGame.entities;
+using SadConsoleGame.entities.creatures;
 using SadRogue.Primitives.GridViews;
 using System.Diagnostics.CodeAnalysis;
 using static SadConsole.Readers.Playscii;
@@ -9,55 +11,95 @@ namespace SadConsoleGame;
 
 internal class Map
 {
+    //map gridview
     public IGridView<bool> wallFloorValues;
-
-    public List<Entity> mapEntities= new List<Entity>(); //entities on the map
-
-    public  ArrayView<Entity> arrayView;
-    // Grid view we'll pass to FOV, which represents the transparency of terrain
-    public  IGridView<bool> TransparencyView;
-
-    // FOV instance we'll use
-    public  IFOV FOV;
-
+    //discovered tiles
+    public IGridView<bool> discoveredTiles;
+    // Array of terrain at each location used in FOV
+    public ArrayView<Entity> arrayView;
+    // Grid view passed to FOV, which represents the transparency of terrain
+    public  IGridView<bool> transparencyView;
+    // FOV instance 
+    public  IFOV fov; 
+    //surface where the map is drawn
     public ScreenSurface mapSurface;
-    public ScreenSurface SurfaceObject => mapSurface;
-    public Entity player { get; set; }
-    public Entity stair { get; set; }
+    //player entity
+    public Player player; 
+    //all entities on the map
+    public List<Entity> mapEntities = new List<Entity>();
+    //ScreenSurface font 
+    private SadFont squareFont = (SadFont) GameHost.Instance.LoadFont("./fonts/CheepicusExtended.font");
 
-    SadFont SquareFont = (SadFont) GameHost.Instance.LoadFont("./fonts/CheepicusExtended.font");
-    public Map(int mapWidth, int mapHeight, int xPosition, int yPosition)
+    //player info
+    public string race;
+    public string charBackground ;
+    public int strength;
+    public int dexterity;
+    public int constitution;
+    public int intuition;
+    public int charisma;
+
+    //constructor
+    public Map(int mapWidth, int mapHeight, int xPosition, int yPosition, string race, string bg, int str, int dex, int cons, int intu, int chari)
     {
         mapSurface = new ScreenSurface(mapWidth, mapHeight);
         mapSurface.Position= new Point(xPosition, yPosition);
-        mapSurface.UseMouse = false;
-        mapSurface.Font= SquareFont;
+        mapSurface.UseMouse = true;
+        mapSurface.Font= squareFont;
+        mapSurface.FocusOnMouseClick = true;
+        mapSurface.MoveToFrontOnMouseClick = true;
 
-        
 
-        
+        this.race = race;
+        this.charBackground = bg;
+        this.strength = str;
+        this.dexterity = dex;
+        this.constitution = cons;
+        this.intuition = intu;
+        this.charisma = chari;
 
         NewMap(mapWidth, mapHeight);
 
         
     }
 
-    //check if a position is occupied by a gameobject
-    public bool IsPositionOccupied(Point position, [NotNullWhen(true)] out Entity? gameObject)
+    //check if a position is occupied by an entity
+    public bool IsPositionOccupied(Point position, [NotNullWhen(true)] out Entity? entity)
     {
         // Try to find a map object at that position
         foreach (Entity otherGameObject in mapEntities)
         {
             if (otherGameObject.position == position)
             {
-                gameObject = otherGameObject;
+                entity = otherGameObject;
                 return true;
             }
             
         }
 
-        gameObject = null;
+        entity = null;
         return false;
+    }
+
+    //draw a new map
+    public void NewMap(int mapWidth, int mapHeight)
+    {
+        mapEntities.Clear();
+        DungeonGen(mapWidth, mapHeight);
+
+        //place player
+        //player = new DynamicEntity(1,true, false, new ColoredGlyph(Color.Red, Color.Black, '@'), RandomEmptyPosition(), mapSurface);
+        player = new Player(charBackground,race,1,strength,dexterity,constitution,intuition,charisma,5,RandomEmptyPosition(),mapSurface);
+        player.Fov(this);
+
+        
+
+    }
+
+    //remove uma entidade do mapa
+    public void RemoveEntity(Entity entity)
+    {
+        mapEntities.Remove(entity);
     }
 
     //return an empty random position
@@ -78,6 +120,7 @@ internal class Map
         return Point.None;
     } 
 
+    //generate the dungeon structure
     private void DungeonGen(int mapWidth,int mapHeight)
     {
         // The map will have a width of 60 and height of 40
@@ -113,14 +156,5 @@ internal class Map
 
     }
 
-    public void NewMap(int mapWidth,int mapHeight)
-    {
-        mapEntities.Clear();
-        DungeonGen(mapWidth, mapHeight);
-
-        //place player
-        player = new Entity(true, false, new ColoredGlyph(Color.Red, Color.Black, '@'), RandomEmptyPosition(), mapSurface);
-        player.Fov(this);
-   
-    }
+    
 }
